@@ -2,7 +2,7 @@ name: Heyzine Reader Sync
 
 on:
   schedule:
-    - cron: "*/1 * * * *"
+    - cron: "*/1 * * * *" 
   workflow_dispatch: {}
 
 jobs:
@@ -17,10 +17,9 @@ jobs:
 
       - name: Install dependencies
         run: pip install requests openpyxl
- 
+
       - name: Run sync
         env:
           HEYZINE_CURL: ${{ secrets.HEYZINE_CURL }}
           GOOGLE_SHEET_URL: ${{ secrets.GOOGLE_SHEET_URL }}
-          GOOGLE_API_KEY: ${{secrets.GOOGLESHEETAPI}}
         run: python3 cron_sync.py
