@@ -22,5 +22,5 @@ jobs:
         env:
           HEYZINE_CURL: ${{ secrets.HEYZINE_CURL }}
           GOOGLE_SHEET_URL: ${{ secrets.GOOGLE_SHEET_URL }}
-          GOOGLESHEETAPI : ${{secrets.GOOGLESHEETAPI}}
+          GOOGLE_API_KEY: ${{secrets.GOOGLESHEETAPI}}
         run: python3 cron_sync.py
