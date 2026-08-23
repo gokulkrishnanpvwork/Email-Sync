@@ -158,6 +158,38 @@ def read_emails_from_google_sheet(url: str, column_name: str = None) -> list:
     return extract_emails_from_rows(rows, column_name)
 
 
+def sheet_url_to_id(url: str) -> str:
+    m = re.search(r"/spreadsheets/d/([a-zA-Z0-9-_]+)", url)
+    if not m:
+        raise ValueError("Could not find a Google Sheet ID in that URL.")
+    return m.group(1)
+
+
+def read_emails_from_google_sheet_api(
+    url: str, api_key: str, column_name: str = None, sheet_range: str = "A:Z"
+) -> list:
+    """
+    Reads emails via the Sheets API v4 with a plain API key (no OAuth).
+    Note: an API key does NOT grant access to a private sheet - Google still
+    enforces the sheet's own sharing setting. This still requires the sheet
+    to be shared as "Anyone with the link" (Viewer); a key only replaces the
+    CSV export as the fetch method, it doesn't make a private sheet readable.
+    For an actually-private sheet, use a service account instead.
+    """
+    sheet_id = sheet_url_to_id(url)
+    api_url = f"https://sheets.googleapis.com/v4/spreadsheets/{sheet_id}/values/{sheet_range}"
+    resp = requests.get(api_url, params={"key": api_key}, timeout=15)
+    if resp.status_code == 403:
+        raise RuntimeError(
+            "Sheets API returned 403. Either the API key is invalid/restricted, "
+            "the Sheets API isn't enabled on that Google Cloud project, or the "
+            "sheet isn't shared as 'Anyone with the link' (Viewer)."
+        )
+    resp.raise_for_status()
+    rows = resp.json().get("values", [])
+    return extract_emails_from_rows(rows, column_name)
+
+
 # ---------------------------------------------------------------------------
 # payload + send
 # ---------------------------------------------------------------------------
