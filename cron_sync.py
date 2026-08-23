@@ -17,13 +17,9 @@ Required environment variables:
                        cookie expires - if a run fails with a 401/403 or an
                        HTML login page in the response body, re-capture the
                        curl command and update the secret.
-  GOOGLE_API_KEY    - Google Cloud API key with the Sheets API enabled.
-                       Note: this does NOT make the sheet private - Google
-                       still enforces the sheet's own sharing setting, so it
-                       must stay shared as "Anyone with the link" (Viewer)
-                       either way. A key only replaces the CSV export as the
-                       fetch method; for an actually-private sheet you need
-                       a service account instead.
+  GOOGLE_SHEET_URL  - link to the Google Sheet (must be shared as "Anyone
+                       with the link" - Viewer). No Google API key needed;
+                       this uses the public CSV export endpoint.
 
 Optional:
   SHEET_COLUMN      - header name of the email column (default: "email").
@@ -36,8 +32,6 @@ import sys
 
 import core
 
-GOOGLE_SHEET_URL = "https://docs.google.com/spreadsheets/d/12M1HpTQNTFOlkYNu_8xQOL2jqNT2yYHhnKsi709t2KI/edit?usp=sharing"
-
 
 def fail(msg: str) -> None:
     print(f"ERROR: {msg}", file=sys.stderr)
@@ -46,13 +40,13 @@ def fail(msg: str) -> None:
 
 def main() -> None:
     curl_text = os.environ.get("HEYZINE_CURL", "").strip()
-    api_key = os.environ.get("GOOGLE_API_KEY", "").strip()
+    sheet_url = os.environ.get("GOOGLE_SHEET_URL", "").strip()
     sheet_column = os.environ.get("SHEET_COLUMN") or None
 
     if not curl_text:
         fail("HEYZINE_CURL environment variable is not set.")
-    if not api_key:
-        fail("GOOGLE_API_KEY environment variable is not set.")
+    if not sheet_url:
+        fail("GOOGLE_SHEET_URL environment variable is not set.")
 
     try:
         config = core.parse_curl(curl_text)
@@ -60,7 +54,7 @@ def main() -> None:
         fail(f"Could not parse HEYZINE_CURL: {e}")
 
     try:
-        emails = core.read_emails_from_google_sheet_api(GOOGLE_SHEET_URL, api_key, sheet_column)
+        emails = core.read_emails_from_google_sheet(sheet_url, sheet_column)
     except Exception as e:
         fail(f"Could not read the Google Sheet: {e}")
 
